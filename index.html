@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Sudoku</title>
+    <script src="sudoku.js"></script>
+    <style type="text/css">
+        #sudoku {
+            border:solid 2px black;
+            display:inline-block;
+        }
+        #sudoku .clear {
+            clear:both;
+            height: 0;
+            overflow: hidden;
+        }
+        #sudoku input {
+            width:10px;
+            border:1px solid #ccc;
+            color:#333;
+        }
+        #sudoku .invalid {
+            border:1px solid red;
+        }
+
+        #sudoku .immutable {
+
+        }
+    </style>
+</head>
+<body>
+    <div id="sudoku"></div>
+    <button onClick="sudoku.solve(0, -1)">Solve</button>
+    <button onClick="sudoku.clear()">Clear</button>
+</body>
+</html>

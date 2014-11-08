@@ -2,7 +2,10 @@
 
 var sudoku = (function () {
     'use strict';
+
+    var instance; // Sudoku instance
     
+    /* cross-browser compatible addEventListener */
     var addEvent = function (elm, evtType, func) {
         if (elm.addEventListener) {
             elm.addEventListener(evtType, func, false);
@@ -11,38 +14,100 @@ var sudoku = (function () {
         }
     };
 
+    /* prevent an event from bubbling up its DOM hierarchy */
     var noBubble = function (e) {
         if (e && e.stopPropagation)
             e.stopPropagation();        
         else if (e && typeof e.cancelBubble != "undefined") e.cancelBubble = true;
     };
 
+    /* prevent the default behaviour of an event */
     var noDefault = function (e) {
         var evt = e ? e : window.event;
         if (evt.preventDefault) evt.preventDefault();
         else if (evt) evt.returnValue = false;
     };
+
+    /* Sudoku view ----updates----> Sudoku model */
+    var updateMatrix = function (cell) {
+        console.log(cell);
+        instance.matrix[cell.row][cell.col] = +cell.value; // alternative of parseInt
+    };
     
+    /* TODO: do some value checking later on */
     var validateCellInput = function (cell) {
-        console.log(cell.value);
+
     };
 
+    /* after the view changes, 1. update the model, 2. validate the input */
     var validateInput = function (e) {
         if (e) {
-            if (e.target) var target = e.target;
+            var target;
+            if (e.target) target = e.target;
             else target = e.srcElement; //IE
-            if (target)
+            
+            if (target) { // if target cell is found
+                updateMatrix(target);
                 validateCellInput(target);
+            }
         }
     };
 
+    /* Check for conflicts on the same row and highlight the invalid cells on the view */
+    var validateRow = function(row, col) {
+        for (var i = 0; i < 9; i++) {
+            if (i != col && instance.matrix[row][i] == instance.matrix[row][col]) {
+                return false;
+            }
+        }
+        return true;
+    };
 
-    var instance; // Sudoku instance
+    /* Check for conflicts on the same column and highlight the invalid cells on the view */
+    var validateColumn = function(row, col) {
+        for (var i = 0; i < 9; i++) {            
+            if (i != row && instance.matrix[i][col] == instance.matrix[row][col]) {
+                return false;
+            }
+        }
+        return true;
+    };
 
-    // Sudoku class constructor
+    /* Check for conflicts on the same 3x3 grid and highlight the invalid cells on the view */
+    var validateGrid = function(row, col) {
+        var row_start = row - row%3;
+        var col_start = col - col%3;
+        for (var i = row_start; i < row_start+3; i++) {
+            for (var j = col_start; j < col_start+3; j++) {
+                if (i != row && j != col && instance.matrix[i][j] == instance.matrix[row][col]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+
+    var solve = function() {
+        console.log("clicked solve");
+    };
+
+    var clear = function() {
+        console.log("clicked clear");
+    };
+
+
+    /* Sudoku class constructor */
     var Sudoku = function () {
         this.board = null; // the board element (div#sudoku)
-        this.matrix = []; 
+        this.matrix = []; //
+        // zero the matrix
+        for (var i = 0; i < 9; i++) {
+            var row = [];
+            for (var j = 0; j < 9; j++) {
+                row.push(0);
+            }
+            this.matrix.push(row);
+        }
         this.init();
     };
 
@@ -53,19 +118,21 @@ var sudoku = (function () {
             return sep;
         },
 
-        createCell: function (x, y) {
+        createCell: function (row, col) {
             var cell = document.createElement("input");
             cell.setAttribute("maxlength", "1");
-            cell._x = x;//conflict with chrome if name it x
-            cell._y = y;
+            cell.setAttribute("row", row);
+            cell.setAttribute("col", col);
+            cell.setAttribute("grid", (row - row%3) / 3 + (col - col%3) / 3);
+            cell.row = row;
+            cell.col = col;
             return cell;
         },
 
         addCells: function () {
-            // zero the matrix
-            for (var x = 0; x < 9; x++) {
-                for (var y = 0; y < 9; y++) {
-                    this.board.appendChild(this.createCell(x, y));
+            for (var row = 0; row < 9; row++) {
+                for (var col = 0; col < 9; col++) {
+                    this.board.appendChild(this.createCell(row, col));
                 }
                 this.board.appendChild(this.createSeparator());
             }
@@ -75,13 +142,15 @@ var sudoku = (function () {
             // 1. create board
             this.board = document.getElementById("sudoku");
             if (this.board) {
-                // 2. populate cells
+                // 2. populate instance cells
                 this.addCells();
 
                 // 3. bind validate event to the game board
                 addEvent(this.board, "keyup", function (e) { 
                     validateInput(e);
                 });
+
+                
             }
         }
     };
@@ -111,9 +180,8 @@ var sudoku = (function () {
     return {
         newGame: function () {
         },
-        clear: function () {
-        },
-        solve: function () {
-        }
+        clear: clear,
+        solve: solve,
+        matrix: function() { return instance.matrix; }
     };
 })();
