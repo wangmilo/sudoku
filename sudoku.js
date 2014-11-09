@@ -6,7 +6,6 @@ var sudoku = (function () {
     var isMobile = typeof window.orientation !== 'undefined';
     var currentCell; // the cell currently in focus by the user
     
-    
     /* cross-browser compatible addEventListener */
     var addEvent = function(elm, evtType, func) {
         if (elm.addEventListener) {
@@ -67,33 +66,36 @@ var sudoku = (function () {
         }
     };
 
-    /* Checks the correctness of the Sudoku board. Add .invalid class to the problematic cells. */
-    var validateInput = function(e) {
+    var findTarget = function(e) {
         if (e) {
-            var target = e.target || e.srcElement;
-            
-            if (target && target.nodeName.toLowerCase() == "input") { // if target cell is found
-                /* After each input, run the validation checks on the entire matrix. */
-                for (var i = 0; i < 9; i++) {
-                    for (var j = 0; j < 9; j++) {
-                        if (instance.matrix[i][j].value != "") { /* don't run on filled tiles */
-                            var isValid = true;
-                            if (!validateGrid(i, j) || !validateRow(i, j) || !validateColumn(i, j)) {
-                                // TODO: change CSS
-                                isValid = false;
-                            }
-                            if (isValid) {
-                                removeClass(instance.matrix[i][j], "invalid");
-                            }
-                            else {
-                                addClass(instance.matrix[i][j], "invalid");
-                            }
+            return e.target || e.srcElement;
+        }
+    }
+
+    /* Checks the correctness of the Sudoku board. Add .invalid class to the problematic cells. */
+    var validateInput = function(cell) {
+        if (cell && cell.nodeName.toLowerCase() == "input") { // if target cell is found
+            /* After each input, run the validation checks on the entire matrix. */
+            for (var i = 0; i < 9; i++) {
+                for (var j = 0; j < 9; j++) {
+                    if (instance.matrix[i][j].value != "") { /* don't run on filled tiles */
+                        var isValid = true;
+                        if (!validateGrid(i, j) || !validateRow(i, j) || !validateColumn(i, j)) {
+                            // TODO: change CSS
+                            isValid = false;
+                        }
+                        if (isValid) {
+                            removeClass(instance.matrix[i][j], "invalid");
+                        }
+                        else {
+                            addClass(instance.matrix[i][j], "invalid");
                         }
                     }
                 }
             }
-            if (target.value == "") removeClass(target, "invalid");
         }
+        if (cell.value == "") removeClass(cell, "invalid");
+
     };
 
     /* Check for conflicts on the same row and highlight the invalid cells on the view */
@@ -233,18 +235,32 @@ var sudoku = (function () {
 
         }
     }
-
-    var createEasy = function() {
-        createBoard(45);
+    var newPuzzle = function(level) {
+        switch(level) {
+            case 1:
+                createBoard(45);
+                break;
+            case 2:
+                createBoard(49);
+                break;
+            case 3:
+                createBoard(53);
+                break;
+            default:
+                break;
+        }
     }
+    // var createEasy = function() {
+    //     createBoard(45);
+    // }
 
-    var createMedium = function() {
-        createBoard(49);
-    }
+    // var createMedium = function() {
+    //     createBoard(49);
+    // }
 
-    var createDifficult = function() {
-        createBoard(53);
-    }
+    // var createDifficult = function() {
+    //     createBoard(53);
+    // }
 
 
     // Sudoku class constructor
@@ -261,10 +277,10 @@ var sudoku = (function () {
     };
 
     Sudoku.prototype = {
-        createSeparator: function () {
-            var sep = document.createElement("div");
-            sep.className = "clear";
-            return sep;
+        createDivider: function(dividerType) {
+            var divider = document.createElement("div");
+            divider.className = dividerType ? (dividerType == 1 ? "sep row" : "col") : "sep";
+            return divider;
         },
 
         createCell: function(row, col) {
@@ -287,8 +303,10 @@ var sudoku = (function () {
                     if (hasClass(currentCell, "immutable")) {
                         currentCell = null; // currentCell cannot be an immutable element
                     }
-                    
+                        
+                        
                         addClass(currentCell, "selected");
+                        
                         currentCell.select();
                     
                 } 
@@ -314,21 +332,33 @@ var sudoku = (function () {
             for (var row = 0; row < 9; row++) {
                 for (var col = 0; col < 9; col++) {
                     this.board.appendChild(this.createCell(row, col));
+                    if (col == 2 || col == 5) {
+                        this.board.appendChild(this.createDivider(2)); // create 3x3 grid column
+                    }
                 }
-                this.board.appendChild(this.createSeparator());
+                if (row == 2 || row == 5) { // create a fatter row as the 3x3 grid row
+                    this.board.appendChild(this.createDivider(1));
+                } else {
+                    this.board.appendChild(this.createDivider(0));
+                }
             }
         },
 
         addVirtualKeyboard: function() {
             var virtualKeyboard = document.getElementById("virtualKeyboard");
-            for (var i = 1; i < 10; i++) {
+            
+
+            for (var i = 0; i < 10; i++) {
                 var digit = document.createElement("button"); // create a button
                 digit.value = i; // number the button
-                digit.innerHTML = i;
+                digit.innerHTML = i ? i : "X";
                 virtualKeyboard.appendChild(digit); // add it to the container
+                if (isMobile && i == 4) virtualKeyboard.appendChild(this.createDivider(0));
                 addEvent(digit, "click", function(e) {
                     if (currentCell) {
+                        if (this.value == 0) this.value = "";
                         currentCell.value = this.value;
+                        validateInput(currentCell);
                     }
                 });
             }
@@ -346,7 +376,8 @@ var sudoku = (function () {
 
                 // 4. delegate validate event up to the game board
                 addEvent(this.board, "keyup", function(e) { 
-                    validateInput(e);
+                    var targetCell = findTarget(e);
+                    validateInput(targetCell);
                 });
 
                 
@@ -377,13 +408,9 @@ var sudoku = (function () {
     bindReady(buildSudoku);
 
     return {
-        newGame: function () {
-        },
+        newPuzzle: newPuzzle,
         clear: clear,
         solve: solve,
-        createEasy: createEasy,
-        createMedium: createMedium,
-        createDifficult: createDifficult,
         matrix: function() { return instance.matrix; },
         board: function() { return instance.board; }
     };

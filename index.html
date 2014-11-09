@@ -2,35 +2,93 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>Sudoku</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- enables mobile rendering and touch zooming -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" /> 
     <script src="sudoku.js"></script>
     <style type="text/css">
-        #sudoku {
-            border:solid 2px black;
-            display:inline-block;
+        html, body {
+            height: 100%;
+            background-color: #FFF;
+            margin: 0;
+            padding: 0;
         }
-        #sudoku .clear {
-            clear:both;
+        body {
+            background: linear-gradient(#999, #FFF);
+            background-color: #FFF;
+        }
+        .clear {
+            clear: both;
+        }
+        #container {
+            padding-top: 40px;
+            text-align: center;
+        }
+        #virtualKeyboard {
+            margin: 8px;
+        }
+        select{
+            height: 34px;
+            font-size: 13px;
+            -webkit-appearance: menulist-button;
+        }
+        #sudoku {
+            margin: 8px auto;
+            border: solid 2px black;
+            display: inline-block;
+            font-size: 0;
+            background-color: #444;
+        }
+        #sudoku .sep {
+            clear: both;
+            overflow: hidden;
             height: 0;
+        }
+        #sudoku .row {
+            clear: both;
+            height: 1px;
+            overflow: hidden;
+        }
+        #sudoku .col {
+            display: inline-block;
+            *display: inline; /* old IE */
+            width: 1px;
             overflow: hidden;
         }
         #sudoku input {
-            width:10px;
-            border:1px solid #ccc;
-            color:#333;
+            border: none;
+            border-top: 1px solid #CCC;
+            border-right: 1px solid #CCC;
+            box-shadow: 0;
+            color: #09F; /* blue */
+            text-align: center;
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            margin: 0;
+            font-size: 18px;
+            border-radius: 0;
+            -webkit-appearance: none;
         }
-        #sudoku .invalid {
-            border:1px solid red;
+        #sudoku input.invalid {
+            background-color: #FF6;
+            /*background-color: #EACA70;*/
         }
 
-        #sudoku .immutable {
-            font-weight: bold;
+        #sudoku input.immutable {
+            font-weight: 900;
+            color: #999;
         }
-
         #sudoku .selected {
-            background-color: blue;
+            background-color: #DDD;
+        }
+        #sudoku input.invalid.selected {
+            background-color: #F55;
+            color: #FFF;
         }
 
-        input[readonly] {
+        #sudoku input[readonly] {
             -webkit-user-select: none; /* Chrome/Safari */        
             -moz-user-select: none; /* Firefox */
             -ms-user-select: none; /* IE10+ */
@@ -39,15 +97,88 @@
             -o-user-select: none;
             user-select: none;
         }
+
+        .button, #virtualKeyboard button {
+            display: inline-block;
+            padding-left: 12px;
+            padding-right: 12px;
+            margin: 4px;
+            color: #FFF;
+            background-color: #314f60;
+            border-color: #1b3544;
+            font-size: 14px;
+            font-weight: bold;
+            height: 34px;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            -webkit-user-select: none;
+               -moz-user-select: none;
+                -ms-user-select: none;
+                 -o-user-select: none;
+                    user-select: none;
+            transition:background-color 0.3s; 
+        }
+        .button {
+            color: #333;
+            background-color: #e6e6e6;
+            border-color: #ccc;
+        }
+        .button:hover {
+            color: #333333;
+            background-color: #ddd;
+            border-color: #ccc;
+        }
+
+        @media only screen and (max-device-width:320px) 
+        {
+            #container {
+                padding-top: 4px;
+            }
+            #sudoku input {
+                width: 30px;
+                height: 30px;
+                font-size: 18px;
+            }
+            #virtualKeyboard button {
+                
+                margin: 2px;
+                font-size: 18px;
+                height: 40px;
+                width: 40px;
+                border-radius: 4px;
+                transition:background-color 0.3s; 
+            }
+        }
+
     </style>
 </head>
 <body>
-    <div id="sudoku"></div>
-    <button onClick="sudoku.solve(0, -1)">Solve</button>
-    <button onClick="sudoku.clear()">Clear</button>
-    <button onClick="sudoku.createEasy()">Easy</button>
-    <button onClick="sudoku.createMedium()">Medium</button>
-    <button onClick="sudoku.createDifficult()">Difficult</button>
-    <div id="virtualKeyboard"></div>
+    <div id="container">
+        <select id="levelSelect" onchange="sudoku.newPuzzle(this.selectedIndex);">
+            <option value="0">New Puzzle</option>
+            <option value="1">Easy</option>
+            <option value="2">Medium</option>
+            <option value="3">Difficult</option>
+        </select>
+    
+<!--         <button class="button" onClick="sudoku.createEasy()">Easy</button>
+        <button class="button" onClick="sudoku.createMedium()">Medium</button>
+        <button class="button" onClick="sudoku.createDifficult()">Difficult</button> -->
+    
+        <button class="button" onClick="sudoku.solve(0, -1)">Solve</button>
+        <button class="button" onClick="sudoku.clear(); document.getElementById('levelSelect').selectedIndex = 0;">Clear</button>
+
+
+
+        <div class="clear"></div>
+        <div id="sudoku"></div>
+        <div class="clear"></div>
+
+        <div id="virtualKeyboard"></div>
+    </div>
 </body>
 </html>
