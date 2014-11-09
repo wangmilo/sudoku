@@ -58,10 +58,10 @@ var sudoku = (function () {
             var target = e.target || e.srcElement;
             
             if (target && target.nodeName.toLowerCase() == "input") { // if target cell is found
-                // After each input, run the validation checks on the entire matrix.
+                /* After each input, run the validation checks on the entire matrix. */
                 for (var i = 0; i < 9; i++) {
                     for (var j = 0; j < 9; j++) {
-                        if (instance.matrix[i][j].value != "") {
+                        if (instance.matrix[i][j].value != "") { /* don't run on filled tiles */
                             var isValid = true;
                             if (!validateGrid(i, j)) {
                                 // TODO: change CSS
@@ -78,8 +78,10 @@ var sudoku = (function () {
                                 isValid = false;
                                 console.log("col conflict");
                             }
-                            if (isValid)
+                            if (isValid) {
                                 removeClass(instance.matrix[i][j], "invalid");
+                                removeClass(target, "invalid");
+                            }
                             else
                                 addClass(instance.matrix[i][j], "invalid");
                         }
@@ -201,6 +203,7 @@ var sudoku = (function () {
                     for (var j = 0; j < 3; j++) {
                         /* initially, make everything readonly */
                         instance.matrix[grid_rows*3+i][grid_cols*3+j].readOnly = true;
+
                         // 3. for each grid, remove holes_per_grid number of cells
                         for (var k = 0; k < digits_array.length; k++) {
                             /* if true, make hole */
