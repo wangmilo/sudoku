@@ -23,7 +23,11 @@
         }
 
         #sudoku .immutable {
+            font-weight: bold;
+        }
 
+        #sudoku .selected {
+            background-color: blue;
         }
 
         input[readonly] {
@@ -44,5 +48,6 @@
     <button onClick="sudoku.createEasy()">Easy</button>
     <button onClick="sudoku.createMedium()">Medium</button>
     <button onClick="sudoku.createDifficult()">Difficult</button>
+    <div id="virtualKeyboard"></div>
 </body>
 </html>

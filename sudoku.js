@@ -3,18 +3,33 @@ var sudoku = (function () {
     'use strict';
 
     var instance; // Sudoku instance
+    var isMobile = typeof window.orientation !== 'undefined';
+    var currentCell; // the cell currently in focus by the user
+    
     
     /* cross-browser compatible addEventListener */
-    var addEvent = function (elm, evtType, func) {
+    var addEvent = function(elm, evtType, func) {
         if (elm.addEventListener) {
             elm.addEventListener(evtType, func, false);
         } else if (elm.attachEvent) {
             elm.attachEvent("on" + evtType, func);
         }
     };
+
+    var noBubble = function (e) {
+        if (e && e.stopPropagation)
+            e.stopPropagation();        
+        else if (e && typeof e.cancelBubble != "undefined") e.cancelBubble = true;
+    };
+
+    var noDefault = function (e) {
+        var evt = e ? e : window.event;
+        if (evt.preventDefault) evt.preventDefault();
+        else if (evt) evt.returnValue = false;
+    };
     
     /* returns true if theClass is in string arr */
-    var contains = function (arr, theClass) {
+    var contains = function(arr, theClass) {
         var i = arr.length;
         while (i--) {
             if (arr[i] === theClass) return true;
@@ -23,14 +38,14 @@ var sudoku = (function () {
     };
 
     /* returns true if DOM element has theClass */
-    var hasClass = function (el, theClass) {
+    var hasClass = function(el, theClass) {
         var retVal = false;
         if (el.className)
             retVal = contains(el.className.split(' '), theClass);
         return retVal;
     };
 
-    var addClass = function (el, theClass) {
+    var addClass = function(el, theClass) {
         if (!hasClass(el, theClass)) {
             if (el.className == "")
                 el.className = theClass;
@@ -39,7 +54,7 @@ var sudoku = (function () {
         }
     };
 
-    var removeClass = function (el, theClass) {
+    var removeClass = function(el, theClass) {
         if (el.className) {
             var newClassName = "";
             var classes = el.className.split(" ");
@@ -52,8 +67,8 @@ var sudoku = (function () {
         }
     };
 
-    // change this later
-    var validateInput = function (e) {
+    /* Checks the correctness of the Sudoku board. Add .invalid class to the problematic cells. */
+    var validateInput = function(e) {
         if (e) {
             var target = e.target || e.srcElement;
             
@@ -63,31 +78,21 @@ var sudoku = (function () {
                     for (var j = 0; j < 9; j++) {
                         if (instance.matrix[i][j].value != "") { /* don't run on filled tiles */
                             var isValid = true;
-                            if (!validateGrid(i, j)) {
+                            if (!validateGrid(i, j) || !validateRow(i, j) || !validateColumn(i, j)) {
                                 // TODO: change CSS
                                 isValid = false;
-                                console.log("grid conflict");
-                            }
-                            if (!validateRow(i, j)) {
-                                // TODO: change CSS, make it a modular function
-                                isValid = false;
-                                console.log("row conflict");
-                            }
-                            if (!validateColumn(i, j)) {
-                                // TODO: change CSS
-                                isValid = false;
-                                console.log("col conflict");
                             }
                             if (isValid) {
                                 removeClass(instance.matrix[i][j], "invalid");
-                                removeClass(target, "invalid");
                             }
-                            else
+                            else {
                                 addClass(instance.matrix[i][j], "invalid");
+                            }
                         }
                     }
                 }
             }
+            if (target.value == "") removeClass(target, "invalid");
         }
     };
 
@@ -135,7 +140,7 @@ var sudoku = (function () {
     /* http://en.wikipedia.org/wiki/Sudoku_solving_algorithms#Backtracking */
     var solve = function(row, col) {
         /* shuffle the array used in the backtracking algorithm */
-        var digits_array = shuffle([1,2,3,4,5,6,7,8,9]);
+        var digits_to_remove = shuffle([1,2,3,4,5,6,7,8,9]);
 
         /* base case */
         if (++col == 9) {
@@ -154,7 +159,7 @@ var sudoku = (function () {
         }
         else { /* grid is empty */
             for (var i = 0; i < 9; i++) {
-                instance.matrix[row][col].value = digits_array[i];
+                instance.matrix[row][col].value = digits_to_remove[i];
                 if (validateRow(row, col) && validateColumn(row, col) && validateGrid(row, col)) // if no conflict, recurse
                     if (solve(row, col))
                         return true;
@@ -198,19 +203,26 @@ var sudoku = (function () {
                 holes_per_grid = Math.ceil(n_holes/grids_left);
                 grids_left--;
                 n_holes -= holes_per_grid;
-                var digits_array = shuffle([1,2,3,4,5,6,7,8,9]).slice(0, holes_per_grid);
+                var digits_to_remove = shuffle([1,2,3,4,5,6,7,8,9]).slice(0, holes_per_grid);
                 for (var i = 0; i < 3; i++) {
                     for (var j = 0; j < 3; j++) {
-                        /* initially, make everything readonly */
+                        // initially, make everything readonly
                         instance.matrix[grid_rows*3+i][grid_cols*3+j].readOnly = true;
+                        // and add .immutable class
+                        addClass(instance.matrix[grid_rows*3+i][grid_cols*3+j], "immutable");
 
                         // 3. for each grid, remove holes_per_grid number of cells
-                        for (var k = 0; k < digits_array.length; k++) {
-                            /* if true, make hole */
-                            if (instance.matrix[grid_rows*3+i][grid_cols*3+j].value == digits_array[k]) {
+                        for (var k = 0; k < digits_to_remove.length; k++) {
+                            /* make certain cells into holes */
+                            if (instance.matrix[grid_rows*3+i][grid_cols*3+j].value == digits_to_remove[k]) {
+                                // set its value to ""
                                 instance.matrix[grid_rows*3+i][grid_cols*3+j].value = "";
-                                /* not a hole, make it readonly */
-                                instance.matrix[grid_rows*3+i][grid_cols*3+j].readOnly = false;
+                                // remove the .immutable class
+                                removeClass(instance.matrix[grid_rows*3+i][grid_cols*3+j], "immutable");
+                                
+                                if (!isMobile) { // if desktop, allow keyboard input
+                                    instance.matrix[grid_rows*3+i][grid_cols*3+j].readOnly = false;
+                                }
                                 console.log("# of holes");
                             }
                         }
@@ -255,9 +267,37 @@ var sudoku = (function () {
             return sep;
         },
 
-        createCell: function (row, col) {
+        createCell: function(row, col) {
             var cell = document.createElement("input");
             cell.setAttribute("maxlength", "1");
+
+            /* if mobile, make every cell readOnly to prevent mobile keyboard from appearing. We'll rely on the mobile game UI. */
+            if (isMobile) cell.readOnly = true;
+
+            addEvent(cell, "mouseup", noDefault); // prevent mouseup event from immediately deselecting focused text
+
+            // keep track of the cell currently in focus, so virtual keyboard can manipulate it
+            addEvent(cell, "focus", function(e) {
+                var target = e.target || e.srcElement;
+                if (target.nodeName.toLowerCase() == "input") {
+                    if (currentCell && hasClass(currentCell, "selected")) { // remove previous currentCell's .selected class
+                        removeClass(currentCell, "selected");
+                    } 
+                    currentCell = e.target || e.srcElement; // update currentCell
+                    if (hasClass(currentCell, "immutable")) {
+                        currentCell = null; // currentCell cannot be an immutable element
+                    }
+                    
+                        addClass(currentCell, "selected");
+                        currentCell.select();
+                    
+                } 
+                else {
+                    console.log("lost focus");
+                    currentCell = null;
+                }
+            });
+
             // cell.setAttribute("row", row);
             // cell.setAttribute("col", col);
             // cell.setAttribute("grid", (row - row%3) / 3 + (col - col%3) / 3);
@@ -279,6 +319,21 @@ var sudoku = (function () {
             }
         },
 
+        addVirtualKeyboard: function() {
+            var virtualKeyboard = document.getElementById("virtualKeyboard");
+            for (var i = 1; i < 10; i++) {
+                var digit = document.createElement("button"); // create a button
+                digit.value = i; // number the button
+                digit.innerHTML = i;
+                virtualKeyboard.appendChild(digit); // add it to the container
+                addEvent(digit, "click", function(e) {
+                    if (currentCell) {
+                        currentCell.value = this.value;
+                    }
+                });
+            }
+        },
+
         init: function () {
             // 1. create board
             this.board = document.getElementById("sudoku");
@@ -286,10 +341,15 @@ var sudoku = (function () {
                 // 2. populate cells
                 this.addCells();
 
-                // 3. delegate validate event up to the game board
-                addEvent(this.board, "keyup", function (e) { 
+                // 3. add virtual keyboard UI
+                this.addVirtualKeyboard();
+
+                // 4. delegate validate event up to the game board
+                addEvent(this.board, "keyup", function(e) { 
                     validateInput(e);
                 });
+
+                
             }
         }
     };
@@ -298,7 +358,7 @@ var sudoku = (function () {
         if (!instance) instance = new Sudoku();
     };
 
-    var bindReady = function (handler) {
+    var bindReady = function(handler) {
         var called = false;
 
         function ready() {
