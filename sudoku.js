@@ -38,9 +38,12 @@ var sudoku = (function () {
 
     /* returns true if DOM element has theClass */
     var hasClass = function(el, theClass) {
-        var retVal = false;
-        if (el.className)
-            retVal = contains(el.className.split(' '), theClass);
+        if (el) {
+            var retVal = false;
+            if (el.className)
+                retVal = contains(el.className.split(' '), theClass);
+            
+        }
         return retVal;
     };
 
@@ -296,7 +299,7 @@ var sudoku = (function () {
             addEvent(cell, "focus", function(e) {
                 var target = e.target || e.srcElement;
                 if (target.nodeName.toLowerCase() == "input") {
-                    if (currentCell && hasClass(currentCell, "selected")) { // remove previous currentCell's .selected class
+                    if (hasClass(currentCell, "selected")) { // remove previous currentCell's .selected class
                         removeClass(currentCell, "selected");
                     } 
                     currentCell = e.target || e.srcElement; // update currentCell
@@ -304,11 +307,11 @@ var sudoku = (function () {
                         currentCell = null; // currentCell cannot be an immutable element
                     }
                         
-                        
+                    if (currentCell) {
                         addClass(currentCell, "selected");
                         
                         currentCell.select();
-                    
+                    }
                 } 
                 else {
                     console.log("lost focus");
