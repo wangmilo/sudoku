@@ -25,11 +25,24 @@
         #sudoku .immutable {
 
         }
+
+        input[readonly] {
+            -webkit-user-select: none; /* Chrome/Safari */        
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE10+ */
+
+            /* Rules below not implemented in browsers yet */
+            -o-user-select: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
     <div id="sudoku"></div>
     <button onClick="sudoku.solve(0, -1)">Solve</button>
     <button onClick="sudoku.clear()">Clear</button>
+    <button onClick="sudoku.createEasy()">Easy</button>
+    <button onClick="sudoku.createMedium()">Medium</button>
+    <button onClick="sudoku.createDifficult()">Difficult</button>
 </body>
 </html>
