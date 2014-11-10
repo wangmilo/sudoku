@@ -17,4 +17,4 @@ Functions closely related to the Sudoku class has been grouped into the prototyp
 The UI tasks were delegated to CSS classes (through JavaScript event listeners) to separate the view from the logic as much as possible.
 
 ## Creator
-** Milo Wang **
+Milo Wang
