@@ -61,7 +61,7 @@ select#levelSelect {
     background-color: #FF6;
 }
 #sudoku input.immutable {
-    font-weight: 900;
+    font-weight: 700;
     color: #999;
 }
 #sudoku input.selected {

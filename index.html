@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Sudoku</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" /> 
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css" href="sudoku.css" />
     <script src="sudoku.js"></script>
 </head>
@@ -26,7 +26,6 @@
         function solve() {
             var success = sudoku.solve(0, -1);
             var msg = document.getElementById('msg');
-            console.log(success);
             if (success) {
                 msg.style.display = "none";
             } else {

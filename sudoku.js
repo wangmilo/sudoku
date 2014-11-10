@@ -14,7 +14,6 @@ var sudoku = (function (options) {
     var currentCell; // the cell currently in focus by the user
 
 /*---------------------- Generic Helpers ----------------------*/
-
     /* cross-browser compatible addEventListener */
     var addEvent = function(elm, evtType, func) {
         if (elm.addEventListener) {
@@ -81,178 +80,6 @@ var sudoku = (function (options) {
         return o;
     };
 
-
-/*---------------------- Validations ----------------------*/
-
-    /* Checks the correctness of the Sudoku board. Add .invalid class to the problematic cells. */
-    var validateInput = function(cell) {
-        if (cell && cell.nodeName.toLowerCase() == "input") { // if target cell is found
-            if (!/[1-9]/.test(cell.value)) { // allow only 1-9 as input
-                cell.value = ""; // note: don't return here, otherwise invalid cells doesn't get cleaned up
-            }
-            /* After each input, run the validation checks on the entire matrix. */
-            for (var i = 0; i < 9; i++) {
-                for (var j = 0; j < 9; j++) {
-                    if (instance.matrix[i][j].value != "") { /* don't run on filled tiles */
-                        var isValid = true;
-                        if (!validateGrid(i, j) || !validateRow(i, j) || !validateColumn(i, j)) {
-                            isValid = false;
-                        }
-                        if (isValid) {
-                            removeClass(instance.matrix[i][j], "invalid");
-                        }
-                        else {
-                            addClass(instance.matrix[i][j], "invalid");
-                        }
-                    }
-                }
-            }
-        }
-        if (cell.value == "") removeClass(cell, "invalid");
-    };
-
-    /* Ensure a row contains the number only once. */
-    var validateRow = function(row, col) {
-        for (var i = 0; i < 9; i++) {
-            if (i != col && instance.matrix[row][i].value == instance.matrix[row][col].value) {
-                return false;
-            }
-        }
-        return true;
-    };
-
-    /* Ensure a column contains the number only once. */
-    var validateColumn = function(row, col) {
-        for (var i = 0; i < 9; i++) {            
-            if (i != row && instance.matrix[i][col].value == instance.matrix[row][col].value) {
-                return false;
-            }
-        }
-        return true;
-    };
-
-    /* Ensure a 3x3 box contains the number only once. */
-    var validateGrid = function(row, col) {
-        var row_start = row - row%3;
-        var col_start = col - col%3;
-        for (var i = row_start; i < row_start+3; i++) {
-            for (var j = col_start; j < col_start+3; j++) {
-                if (!(i == row && j == col) && instance.matrix[i][j].value == instance.matrix[row][col].value) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    };
-
-    /* http://en.wikipedia.org/wiki/Sudoku_solving_algorithms#Backtracking */
-    var solve = function(row, col) {
-        /* shuffle the array used in the backtracking algorithm */
-        var digits_to_remove = shuffle([1,2,3,4,5,6,7,8,9]);
-
-        /* base case */
-        if (++col == 9) {
-            col = 0;
-            if (++row == 9) {
-                return true;
-            }
-        }
-
-        /* if grid is not empty */
-        if (instance.matrix[row][col].value != "") {
-            if (!(validateRow(row, col) && validateColumn(row, col) && validateGrid(row, col))) {
-                return false;
-            }
-            return solve(row, col);
-        }
-        else { /* grid is empty */
-            for (var i = 0; i < 9; i++) {
-                instance.matrix[row][col].value = digits_to_remove[i];
-                if (validateRow(row, col) && validateColumn(row, col) && validateGrid(row, col)) // if no conflict, recurse
-                    if (solve(row, col))
-                        return true;
-            }
-            instance.matrix[row][col].value = "";
-            return false;
-        }
-    };
-
-    /* Clear the puzzle board */
-    var clear = function() {
-        for (var row = 0; row < 9; row++) {
-            for (var col = 0; col < 9; col++) {
-                instance.matrix[row][col].value = "";
-                removeClass(instance.matrix[row][col], "invalid");
-            }
-        }
-    };
-
-    /* Create a new Sudoku board. Difficulties can be configured in sudokuOptions.
-     *
-     * The algorithm works like this: First, generate a complete solution.
-     * Then delete n_holes cells from the solution.
-     *
-     * To ensure an even distribution of deleted cells, 
-     * I iterated over the puzzle one 3x3 grid at a time, 
-     * deleting a calculated the number of blank cells from each grid.
-     */
-    var createBoard = function(n_holes) {
-        var grids_left = 9;
-        var holes_per_grid;
-
-        // 1. Generate a solution
-        solve(0, -1);
-        // 2. Iterate through the 9 3x3 grids.
-        for (var grid_rows = 0; grid_rows < 3; grid_rows++) {
-            for (var grid_cols = 0; grid_cols < 3; grid_cols++) {
-                holes_per_grid = Math.ceil(n_holes/grids_left);
-                grids_left--;
-                n_holes -= holes_per_grid;
-                // 3. randomly decide which digits to remove from the current 3x3 grid.
-                var digits_to_remove = shuffle([1,2,3,4,5,6,7,8,9]).slice(0, holes_per_grid);
-                for (var i = 0; i < 3; i++) {
-                    for (var j = 0; j < 3; j++) {
-                        var row = grid_rows*3+i;
-                        var col = grid_cols*3+j;
-
-                        // 4. make everything readOnly
-                        instance.matrix[row][col].readOnly = true;
-                        addClass(instance.matrix[row][col], "immutable");
-
-                        // 5. for each grid, remove holes_per_grid number of cells
-                        for (var k = 0; k < digits_to_remove.length; k++) {
-                            if (instance.matrix[row][col].value == digits_to_remove[k]) {
-                                instance.matrix[row][col].value = "";
-                                // 6. allow the user to fill in the deleted cells
-                                removeClass(instance.matrix[row][col], "immutable");
-                                
-                                if (!isMobile) { // if desktop, allow keyboard input
-                                    instance.matrix[row][col].readOnly = false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    var newPuzzle = function(level) {
-        switch(level) {
-            case 1:
-                createBoard(options.easy);
-                break;
-            case 2:
-                createBoard(options.medium);
-                break;
-            case 3:
-                createBoard(options.difficult);
-                break;
-            default:
-                break;
-        }
-    }
-
     /* Sudoku class constructor */
     var Sudoku = function () {
         this.board = null; // the board element (div#sudoku)
@@ -267,6 +94,25 @@ var sudoku = (function (options) {
     };
 
     Sudoku.prototype = {
+        init: function () {
+            // 1. create board
+            this.board = document.getElementById("sudoku");
+            if (this.board) {
+                // 2. populate cells
+                this.addCells();
+
+                // 3. add virtual keyboard UI
+                this.addVirtualKeyboard("virtualKeyboard");
+
+                // 4. delegate validate event up to the game board
+                addEvent(this.board, "keyup", function(e) { 
+                    var targetCell = e.target || e.srcElement;
+                    instance.validateInput(targetCell);
+                }); 
+            }
+        },
+
+/*---------------------- DOM Generation ----------------------*/
         /* dividerType: 0 - 0px new line, 1 - grid row border, 2 - grid column border */
         createDivider: function(dividerType) {
             var divider = document.createElement("div");
@@ -288,7 +134,7 @@ var sudoku = (function (options) {
             addEvent(cell, "focus", function(e) {
                 var target = e.target || e.srcElement;
                 if (target.nodeName.toLowerCase() == "input") {
-                    if (hasClass(currentCell, "selected")) { // remove previous currentCell's .selected class
+                    if (currentCell && hasClass(currentCell, "selected")) { // remove previous currentCell's .selected class
                         removeClass(currentCell, "selected");
                     } 
                     currentCell = e.target || e.srcElement;
@@ -329,8 +175,8 @@ var sudoku = (function (options) {
         },
 
         /* Create a virtual keyboard for touchscreen devices. Or as an alternative input source. */
-        addVirtualKeyboard: function() {
-            var virtualKeyboard = document.getElementById("virtualKeyboard");
+        addVirtualKeyboard: function(id) {
+            var virtualKeyboard = document.getElementById(id);
 
             for (var i = 0; i < 10; i++) {
                 var digit = document.createElement("button"); // create a button
@@ -342,35 +188,189 @@ var sudoku = (function (options) {
                     if (currentCell) {
                         if (this.value == 0) this.value = "";
                         currentCell.value = this.value;
-                        validateInput(currentCell);
+                        instance.validateInput(currentCell);
                     }
                 });
             }
         },
 
-        init: function () {
-            // 1. create board
-            this.board = document.getElementById("sudoku");
-            if (this.board) {
-                // 2. populate cells
-                this.addCells();
+        /* Create a new Sudoku board. Difficulties can be configured in sudokuOptions.
+         *
+         * The algorithm works like this: First, generate a complete solution.
+         * Then delete n_holes cells from the solution.
+         *
+         * To ensure an even distribution of deleted cells, 
+         * I iterated over the puzzle one 3x3 grid at a time, 
+         * deleting a calculated the number of blank cells from each grid.
+         */
+        createBoard: function(n_holes) {
+            var grids_left = 9;
+            var holes_per_grid;
 
-                // 3. add virtual keyboard UI
-                this.addVirtualKeyboard();
+            // 1. Generate a solution
+            this.solve(0, -1);
+            // 2. Iterate through the 9 3x3 grids.
+            for (var grid_rows = 0; grid_rows < 3; grid_rows++) {
+                for (var grid_cols = 0; grid_cols < 3; grid_cols++) {
+                    holes_per_grid = Math.ceil(n_holes/grids_left);
+                    grids_left--;
+                    n_holes -= holes_per_grid;
+                    // 3. randomly decide which digits to remove from the current 3x3 grid.
+                    var digits_to_remove = shuffle([1,2,3,4,5,6,7,8,9]).slice(0, holes_per_grid);
+                    for (var i = 0; i < 3; i++) {
+                        for (var j = 0; j < 3; j++) {
+                            var row = grid_rows*3+i;
+                            var col = grid_cols*3+j;
 
-                // 4. delegate validate event up to the game board
-                addEvent(this.board, "keyup", function(e) { 
-                    var targetCell = e.target || e.srcElement;
-                    validateInput(targetCell);
-                }); 
+                            // 4. make everything readOnly
+                            this.matrix[row][col].readOnly = true;
+                            addClass(this.matrix[row][col], "immutable");
+
+                            // 5. for each grid, remove holes_per_grid number of cells
+                            for (var k = 0; k < digits_to_remove.length; k++) {
+                                if (this.matrix[row][col].value == digits_to_remove[k]) {
+                                    this.matrix[row][col].value = "";
+                                    // 6. allow the user to fill in the deleted cells
+                                    removeClass(this.matrix[row][col], "immutable");
+                                    
+                                    if (!isMobile) { // if desktop, allow keyboard input
+                                        this.matrix[row][col].readOnly = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        }
-    };
+        },
 
+/*---------------------- Core Functionalities ----------------------*/
+        /* http://en.wikipedia.org/wiki/Sudoku_solving_algorithms#Backtracking */
+        solve: function(row, col) {
+            /* shuffle the array used in the backtracking algorithm */
+            var digits_to_remove = shuffle([1,2,3,4,5,6,7,8,9]);
+
+            /* base case */
+            if (++col == 9) {
+                col = 0;
+                if (++row == 9) {
+                    return true;
+                }
+            }
+
+            /* if grid is not empty */
+            if (this.matrix[row][col].value != "") {
+                if (!(this.validateRow(row, col) && this.validateColumn(row, col) && this.validateGrid(row, col))) {
+                    return false;
+                }
+                return this.solve(row, col);
+            }
+            else { /* grid is empty */
+                for (var i = 0; i < 9; i++) {
+                    this.matrix[row][col].value = digits_to_remove[i];
+                    if (this.validateRow(row, col) && this.validateColumn(row, col) && this.validateGrid(row, col)) // if no conflict, recurse
+                        if (this.solve(row, col))
+                            return true;
+                }
+                this.matrix[row][col].value = "";
+                return false;
+            }
+        },
+
+        newPuzzle: function(level) {
+            switch(level) {
+                case 1:
+                    this.createBoard(options.easy);
+                    break;
+                case 2:
+                    this.createBoard(options.medium);
+                    break;
+                case 3:
+                    this.createBoard(options.difficult);
+                    break;
+                default:
+                    break;
+            }
+        },
+
+        /* Clear the puzzle board */
+        clear: function() {
+            for (var row = 0; row < 9; row++) {
+                for (var col = 0; col < 9; col++) {
+                    this.matrix[row][col].value = "";
+                    removeClass(this.matrix[row][col], "invalid");
+                }
+            }
+        },
+
+/*---------------------- Validations ----------------------*/
+        /* Checks the correctness of the Sudoku board. Add .invalid class to the problematic cells. */
+        validateInput: function(cell) {
+            if (cell && cell.nodeName.toLowerCase() == "input") { // if target cell is found
+                if (!/[1-9]/.test(cell.value)) { // allow only 1-9 as input
+                    cell.value = ""; // note: don't return here, otherwise invalid cells doesn't get cleaned up
+                }
+                /* After each input, run the validation checks on the entire matrix. */
+                for (var i = 0; i < 9; i++) {
+                    for (var j = 0; j < 9; j++) {
+                        if (this.matrix[i][j].value != "") { /* don't run on filled tiles */
+                            var isValid = true;
+                            if (!this.validateGrid(i, j) || !this.validateRow(i, j) || !this.validateColumn(i, j)) {
+                                isValid = false;
+                            }
+                            if (isValid) {
+                                removeClass(this.matrix[i][j], "invalid");
+                            }
+                            else {
+                                addClass(this.matrix[i][j], "invalid");
+                            }
+                        }
+                    }
+                }
+            }
+            if (cell.value == "") removeClass(cell, "invalid");
+        },
+
+        /* Ensure a row contains the number only once. */
+        validateRow: function(row, col) {
+            for (var i = 0; i < 9; i++) {
+                if (i != col && this.matrix[row][i].value == this.matrix[row][col].value) {
+                    return false;
+                }
+            }
+            return true;
+        },
+
+        /* Ensure a column contains the number only once. */
+        validateColumn: function(row, col) {
+            for (var i = 0; i < 9; i++) {            
+                if (i != row && this.matrix[i][col].value == this.matrix[row][col].value) {
+                    return false;
+                }
+            }
+            return true;
+        },
+
+        /* Ensure a 3x3 box contains the number only once. */
+        validateGrid: function(row, col) {
+            var row_start = row - row%3;
+            var col_start = col - col%3;
+            for (var i = row_start; i < row_start+3; i++) {
+                for (var j = col_start; j < col_start+3; j++) {
+                    if (!(i == row && j == col) && this.matrix[i][j].value == this.matrix[row][col].value) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    }; /* End of Prototype */
+
+/*---------------------- Instantiate Sudoku on DOM ready ----------------------*/
     var buildSudoku = function () {
         if (!instance) {
             instance = new Sudoku();
-            newPuzzle(1);
+            instance.newPuzzle(1);
         }
     };
 
@@ -393,10 +393,11 @@ var sudoku = (function (options) {
 
     bindReady(buildSudoku);
 
+/*---------------------- Public functions for external use ----------------------*/
     return {
-        newPuzzle: newPuzzle,
-        clear: clear,
-        solve: solve,
+        newPuzzle: function(level) { instance.newPuzzle(level); },
+        clear: function() { instance.clear(); },
+        solve: function(row, col) { return instance.solve(row, col); },
         // uncomment for debugging
         // matrix: function() { return instance.matrix; },
         // board: function() { return instance.board; }
