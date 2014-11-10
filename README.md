@@ -1,6 +1,6 @@
 # Sudoku
 
-[Live Demo](www.milowang.com/sudoku/)
+[Live Demo](http://www.milowang.com/sudoku)
 
 ## Overview
 This game includes a solver and a board generator with 3 difficulty levels.
