@@ -1,4 +1,6 @@
-﻿var sudokuOptions = {
+﻿/* Sudoku by Milo Wang */
+
+var sudokuOptions = {
     easy: 45,
     medium: 49,
     difficult: 53
@@ -86,8 +88,7 @@ var sudoku = (function (options) {
     var validateInput = function(cell) {
         if (cell && cell.nodeName.toLowerCase() == "input") { // if target cell is found
             if (!/[1-9]/.test(cell.value)) { // allow only 1-9 as input
-                cell.value = "";
-                return;
+                cell.value = ""; // note: don't return here, otherwise invalid cells doesn't get cleaned up
             }
             /* After each input, run the validation checks on the entire matrix. */
             for (var i = 0; i < 9; i++) {
@@ -367,7 +368,10 @@ var sudoku = (function (options) {
     };
 
     var buildSudoku = function () {
-        if (!instance) instance = new Sudoku();
+        if (!instance) {
+            instance = new Sudoku();
+            newPuzzle(1);
+        }
     };
 
     /* waits for DOM ready, then call handler */

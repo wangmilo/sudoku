@@ -8,17 +8,31 @@
 </head>
 <body>
     <div id="container">
+        <div id="msg">No possible solutions.</div>
         <select id="levelSelect" onchange="sudoku.newPuzzle(this.selectedIndex);">
-            <option value="0">New Puzzle</option>
+            <option value="0">New Sudoku</option>
             <option value="1">Easy</option>
             <option value="2">Medium</option>
             <option value="3">Difficult</option>
         </select>
-        <button class="button" onClick="sudoku.solve(0, -1)">Solve</button>
+        <button class="button" onClick="solve()">Solve</button>
         <button class="button" onClick="sudoku.clear(); document.getElementById('levelSelect').selectedIndex = 0;">Clear</button>
         <div class="clear"></div>
         <div id="sudoku"></div>
         <div id="virtualKeyboard"></div>
+        <p>Sudoku by Milo</p>
     </div>
+    <script type="text/javascript">
+        function solve() {
+            var success = sudoku.solve(0, -1);
+            var msg = document.getElementById('msg');
+            console.log(success);
+            if (success) {
+                msg.style.display = "none";
+            } else {
+                msg.style.display = "block";
+            }
+        }
+    </script>
 </body>
 </html>

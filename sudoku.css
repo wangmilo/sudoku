@@ -1,0 +1,156 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #FFF;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+body {
+    background: linear-gradient(#999, #FFF);
+    background-color: #FFF;
+}
+select#levelSelect {
+    height: 34px;
+    font-size: 13px;
+    -webkit-appearance: menulist-button;
+}
+#container {
+    padding-top: 40px;
+    text-align: center;
+}
+#virtualKeyboard {
+    margin: 8px 0;
+}
+#msg {
+    display: none;
+    width: 210px;
+    padding: 10px;
+    margin: 4px auto;
+    text-align: center;
+    color: #FFF;
+    font-weight: bold;
+    background-color: #F55;
+    border-radius: 4px;
+}
+#sudoku {
+    margin: 8px auto;
+    border: solid 2px black;
+    display: inline-block;
+    font-size: 0;
+    background-color: #444;
+}
+#sudoku input {
+    border: none;
+    border-top: 1px solid #CCC;
+    border-right: 1px solid #CCC;
+    box-shadow: 0;
+    color: #09F; /* blue */
+    text-align: center;
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    margin: 0;
+    font-size: 18px;
+    border-radius: 0;
+    -webkit-appearance: none;
+}
+#sudoku input:not([class="immutable"]):hover {
+    background-color: #DDD;
+}
+#sudoku input.invalid {
+    background-color: #FF6;
+}
+#sudoku input.immutable {
+    font-weight: 900;
+    color: #999;
+}
+#sudoku input.selected {
+    background-color: #DDD;
+}
+#sudoku input.invalid.selected {
+    background-color: #F55;
+    color: #FFF;
+}
+#sudoku input[readonly] {
+    -webkit-user-select: none; /* Chrome/Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+ */
+
+    /* Rules below not implemented in browsers yet */
+    -o-user-select: none;
+    user-select: none;
+}
+#sudoku .sep {
+    clear: both;
+    overflow: hidden;
+    height: 0;
+}
+#sudoku .row {
+    clear: both;
+    height: 1px;
+    overflow: hidden;
+}
+#sudoku .col {
+    display: inline-block;
+    *display: inline; /* old IE */
+    width: 1px;
+    overflow: hidden;
+}
+
+#container .clear {
+    clear: both;
+}
+#container .button, #virtualKeyboard button {
+    display: inline-block;
+    padding-left: 12px;
+    padding-right: 12px;
+    margin: 4px;
+    color: #FFF;
+    background-color: #314f60;
+    border-color: #1b3544;
+    font-size: 14px;
+    font-weight: bold;
+    height: 34px;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+         -o-user-select: none;
+            user-select: none;
+    transition:background-color 0.3s; 
+}
+#container .button {
+    color: #333;
+    background-color: #e6e6e6;
+    border-color: #ccc;
+}
+#container .button:hover {
+    color: #333333;
+    background-color: #ddd;
+    border-color: #ccc;
+}
+
+@media only screen and (max-device-width:550px) 
+{
+    #container {
+        padding-top: 4px;
+    }
+    #sudoku input {
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
+    }
+    #virtualKeyboard button {
+        margin: 2px;
+        font-size: 26px;
+        height: 50px;
+        width: 50px;
+        border-radius: 4px;
+        transition:background-color 0.3s; 
+    }
+}
